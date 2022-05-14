@@ -28,33 +28,6 @@ fn target_scrypt_work_factor() -> u8 {
     let mut log_n = 10;
 
     let duration: Option<Duration> = {
-        // Platforms that have a functional SystemTime::now():
-        #[cfg(not(all(target_arch = "wasm32", not(target_os = "wasi"))))]
-        {
-            use std::time::SystemTime;
-            let start = SystemTime::now();
-            scrypt(&[], log_n, "").expect("log_n < 64");
-            SystemTime::now().duration_since(start).ok()
-        }
-
-        // Platforms that can use Performance timer
-        #[cfg(all(target_arch = "wasm32", not(target_os = "wasi"), feature = "web-sys"))]
-        {
-            web_sys::window().and_then(|window| {
-                { window.performance() }.map(|performance| {
-                    let start = performance.now();
-                    scrypt(&[], log_n, "").expect("log_n < 64");
-                    Duration::from_secs_f64((performance.now() - start) / 1_000e0)
-                })
-            })
-        }
-
-        // Platforms where SystemTime::now() panics:
-        #[cfg(all(
-            target_arch = "wasm32",
-            not(target_os = "wasi"),
-            not(feature = "web-sys")
-        ))]
         {
             None
         }
@@ -71,7 +44,7 @@ fn target_scrypt_work_factor() -> u8 {
         })
         .unwrap_or({
             // Couldn't measure, so guess. This is roughly 1 second on a modern machine.
-            18
+            10
         })
 }
 
